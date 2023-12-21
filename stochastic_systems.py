@@ -118,7 +118,7 @@ def random_time_intervention(
         init_x,
         params,
         t_max,
-		func
+        func
         ):
 
     r, k, alpha, sigma, gamma = params
@@ -127,23 +127,24 @@ def random_time_intervention(
 
     num_times = len(init_x)
 
-	times = np.sort(np.random.rand() * max_time)
-	
-	ts = 0.
-	data = []
-	for tt in time:
-		# evolve to tt
-		LVSND.update_x(tt - ts)
+    times = np.sort(np.random.rand(num_times) * t_max)
+    
+    ts = 0.
+    data = []
+    for tt in times:
+        # evolve to tt
+        LVSND.update_x(tt - ts)
 
-		# apply func to change state
-		LVSND._x = func(LVSND._x)
+        # apply func to change state
+        LVSND._x = func(LVSND._x, r, k)
 
-		# evolve to tmax
-		LVSND.update_x(t_max - tt)
+        # evolve to tmax
+        LVSND.update_x(t_max - tt)
 
-		# read state and store with tt
-		data.append(np.array([tt, LVSND._x], ndmin=2))
+        # read state and store with tt
+        data.append(np.concatenate([np.array(tt, ndmin=2),
+                                    LVSND._x.reshape(1,-1)], axis=1))
 
-	data = np.concatenate(data, axis=0)
+    data = np.concatenate(data, axis=0)
 
-	return data
+    return data

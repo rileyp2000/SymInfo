@@ -98,7 +98,20 @@ def test_point_sample():
 def lvsym(x, r, k, p=None):
     if p is None:
         p = 1. / k ** 2
-    return k * np.exp(p * k ** 2) * x / np.sqrt(k ** 2 - x ** 2 + np.exp(2 * p * k ** 2) * x ** 2
+    return k * np.exp(p * k ** 2) * x / np.sqrt(k ** 2 - x ** 2 + np.exp(2 * p * k ** 2) * x ** 2)
 
-test_random_time_intervention():
-    pass
+
+def test_random_time_intervention():
+    r = np.array([1., 1.])
+    k = np.array([100., 100.])
+    alpha = ([[1., -0.2], [-0.2, 1.]])
+    sigma = np.array([0.1, 0.1])
+    gamma = 1.
+    params = [r, k, alpha, sigma, gamma]
+    t_max = 8.
+
+    init_x = []
+    for ii in range(100):
+        init_x.append(np.abs(np.random.normal(5., 0.5, 2)))
+    data = random_time_intervention(init_x, params, t_max, lvsym)
+    print(data) 
