@@ -118,25 +118,30 @@ def random_time_intervention(
         init_x,
         params,
         t_max,
-        func
+        func,
+        num_times=100
         ):
 
     r, k, alpha, sigma, gamma = params
 
-    LVSND = LotkaVolterraSND(r, k, alpha, sigma, init_x[0], gamma=gamma)
+    LVSND = LotkaVolterraSND(r, k, alpha, sigma, init_x, gamma=gamma)
 
-    num_times = len(init_x)
-
-    times = np.sort(np.random.rand(num_times) * t_max)
+#    times = np.sort(np.random.rand(num_times) * t_max)
     
     ts = 0.
     data = []
-    for tt in times:
+    for ii in range(num_times):
+        # reset the state
+        LVSND._x = copy.copy(init_x)
+
+        # choose a random time
+        tt = np.random.rand() * t_max
+
         # evolve to tt
         LVSND.update_x(tt - ts)
 
         # apply func to change state
-        LVSND._x = func(LVSND._x, r, k)
+        LVSND._x = func(copy.copy(LVSND._x), r, k)
 
         # evolve to tmax
         LVSND.update_x(t_max - tt)
@@ -144,6 +149,7 @@ def random_time_intervention(
         # read state and store with tt
         data.append(np.concatenate([np.array(tt, ndmin=2),
                                     LVSND._x.reshape(1,-1)], axis=1))
+
 
     data = np.concatenate(data, axis=0)
 
