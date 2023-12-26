@@ -93,6 +93,23 @@ def test_point_sample():
         plt.plot(times, ss, 'k.')
 
 
+    # TEST 8
+    r = np.array([1., 1.])
+    k = np.array([100., 100.])
+    alpha = ([[1., -0.2], [-0.2, 1.]])
+    sigma = np.array([0.1, 0.1])
+    gamma = 1.
+    init_x = [np.array([5., 5.]), np.array([40., 40.])]
+    times = np.linspace(0., 6., 50)
+    samples8 = point_sample(init_x, [r, k, alpha, sigma, gamma], times,
+                            fixed_step=True)
+
+    plt.figure()
+    for ss in samples8:
+        plt.plot(times, ss[:,0], 'b.')
+        plt.plot(times, ss[:,1], 'g.')
+
+
     plt.show()
 
 def lvsym(x, r, k, p=None):
@@ -110,8 +127,10 @@ def test_random_time_intervention():
     params = [r, k, alpha, sigma, gamma]
     t_max = 8.
 
-    init_x = []
-    for ii in range(100):
-        init_x.append(np.abs(np.random.normal(5., 0.5, 2)))
+#    init_x = []
+#    for ii in range(100):
+#        init_x.append(np.abs(np.random.normal(5., 0.5, 2)))
+    init_x = np.array([5., 4.])
     data = random_time_intervention(init_x, params, t_max, lvsym)
     print(data) 
+

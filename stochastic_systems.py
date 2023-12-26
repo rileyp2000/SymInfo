@@ -17,7 +17,8 @@ class LotkaVolterraSND( object ):
         Systems - Liu, M. & Fan M.; J Nonlinear Sci (2017)
     """
 
-    def __init__(self, r, k, alpha, sigma, init_x, gamma=1., init_t=0, steps=10**3):
+    def __init__(self, r, k, alpha, sigma, init_x, gamma=1., init_t=0,
+                 steps=10**3, fixed_step=False):
         """ Initializes a stochastic competitive Lotka-Volterra model with n 
             species
         
@@ -50,9 +51,8 @@ class LotkaVolterraSND( object ):
 
         self._x = copy.copy(init_x)
         self._time = float(init_t)
-        self._delta_t = 1
         self._steps = steps
-        
+        self._fixed_step = fixed_step
         self._sigma = sigma
 
 
@@ -60,10 +60,16 @@ class LotkaVolterraSND( object ):
 
         if elapsed_time == 0.:
             return None
-
-        delta = float(elapsed_time) / float(self._steps)
-        if delta < 0:
-            print(delta)
+        
+        remainder = None
+        if self._fixed_step:
+            delta = float(10 ** (-3))
+            self._steps = int(round(elapsed_time / delta))
+            if not elapsed_time - self._steps * delta <= 10.**(-9):
+                pdb.set_trace()
+            
+        else:
+            delta = float(elapsed_time) / float(self._steps)
         X = self._x
         dX = np.zeros(len(X))
         for s in range(self._steps):
@@ -76,6 +82,16 @@ class LotkaVolterraSND( object ):
                 * (noise**2 - 1.))
 
                 X[i] = X[i] + dX[i] * delta
+                X[i] = np.max([X[i], 0.])
+            if remainder is not None:
+                noise = np.random.normal()
+                
+                dX[i] = self._r[i] * (X[i] ** self._gamma) * (1. - (np.sum(self._alpha[i] *
+                X)/self._k[i]) ) + (self._sigma[i] * X[i] * noise / (
+                np.sqrt(remainder) ) ) + (self._sigma[i]**2 / 2.) * (X[i]
+                * (noise**2 - 1.))
+
+                X[i] = X[i] + dX[i] * remainder
                 X[i] = np.max([X[i], 0.])
  
         self._x = X
@@ -99,12 +115,14 @@ def point_sample(
         params, 
         times=np.linspace(0., 10., 100), 
         duration=10, 
-        num_samples=10
+        num_samples=10,
+        fixed_step=False
         ):
     
     r, k, alpha, sigma, gamma = params
 
-    LVSND = LotkaVolterraSND(r, k, alpha, sigma, init_x[0], gamma=gamma)
+    LVSND = LotkaVolterraSND(r, k, alpha, sigma, init_x[0], gamma=gamma,
+                             fixed_step=fixed_step)
 
     data = []
     for ii in range(len(init_x)):
@@ -124,7 +142,8 @@ def random_time_intervention(
 
     r, k, alpha, sigma, gamma = params
 
-    LVSND = LotkaVolterraSND(r, k, alpha, sigma, init_x, gamma=gamma)
+    LVSND = LotkaVolterraSND(r, k, alpha, sigma, init_x, gamma=gamma,
+                             fixed_step=True)
 
 #    times = np.sort(np.random.rand(num_times) * t_max)
     
@@ -135,16 +154,16 @@ def random_time_intervention(
         LVSND._x = copy.copy(init_x)
 
         # choose a random time
-        tt = np.random.rand() * t_max
+        tt = np.round(np.random.rand() * t_max, 3)
 
         # evolve to tt
-        LVSND.update_x(tt - ts)
-
+        LVSND.update_x(np.round(tt - ts, 3))
+    
         # apply func to change state
         LVSND._x = func(copy.copy(LVSND._x), r, k)
 
         # evolve to tmax
-        LVSND.update_x(t_max - tt)
+        LVSND.update_x(np.round(t_max - tt, 3))
 
         # read state and store with tt
         data.append(np.concatenate([np.array(tt, ndmin=2),
