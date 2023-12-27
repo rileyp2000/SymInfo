@@ -7,9 +7,11 @@ import numpy as np
 from symmetries import *
 from stochastic_systems import *
 from sklearn.feature_selection import mutual_info_regression
+from scipy.stats import ks_2samp
 import matplotlib.pyplot as plt
 import sys
 import getopt
+import pdb
 
 def main(num_trials):
     r = np.array([1.5])
@@ -37,16 +39,19 @@ def main(num_trials):
         mi_B.append(mutual_info_regression(data_B[:,0].reshape(-1,1),
                                            data_B[:,1]))
 
-    mi_A = np.array(mi_A)
-    mi_B = np.array(mi_B)
+    mi_A = np.concatenate(mi_A)
+    mi_B = np.concatenate(mi_B)
 
     mu_A = np.mean(mi_A)
     mu_B = np.mean(mi_B)
 
     std_A = np.std(mi_A)
     std_B = np.std(mi_B)
+    test = ks_2samp(mi_A, mi_B)
 
-    out = np.array([mu_A, std_A, mu_B, std_B])
+    print(test)
+
+    out = np.array([mu_A, std_A, mu_B, std_B, test[1]])
 
     np.savetxt('experiment1.txt', out)
     print("System A: mean = {}; std = {}".format(mu_A, std_A))
