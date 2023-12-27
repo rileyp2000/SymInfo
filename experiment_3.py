@@ -1,15 +1,18 @@
-# file: experiment_1.py
+# file: experiment_3.py
 
-""" Symmetries known exactly from analysis of model.
+""" No model, or no symmetries known. Compare MI using under an arbitrary 
+    intervention.
 """
 
 import numpy as np
-from symmetries import *
 from stochastic_systems import *
 from sklearn.feature_selection import mutual_info_regression
 import matplotlib.pyplot as plt
 import sys
 import getopt
+
+def sym_func(x, r, k):
+    return x ** (-1) 
 
 def main(num_trials):
     r = np.array([1.5])
@@ -28,9 +31,9 @@ def main(num_trials):
     mi_B = []
     
     for ii in range(num_trials):
-        data_A = np.round(random_time_intervention(init_x, params_A, t_max, lvsym,
-                                          num_times=num_times), 2)
-        data_B = np.round(random_time_intervention(init_x, params_B, t_max, lvsym,
+        data_A = np.round(random_time_intervention(init_x, params_A, t_max,
+                                                   sym_func, num_times=num_times), 2)
+        data_B = np.round(random_time_intervention(init_x, params_B, t_max, sym_func,
                                           num_times=num_times), 2)
         mi_A.append(mutual_info_regression(data_A[:,0].reshape(-1,1),
                                            data_A[:,1]))
