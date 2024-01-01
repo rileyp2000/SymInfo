@@ -178,3 +178,51 @@ def random_time_intervention(
     data = np.concatenate(data, axis=0)
 
     return data
+
+
+def random_x_int_loop_func(init_x, ts, t_max, LVSND, r, k, func):
+    # reset the state
+    LVSND._x = copy.copy(init_x)
+
+    # choose a random time
+    tt = np.round(np.random.rand() * t_max, 3)
+
+    # evolve to tt and save state
+    LVSND.update_x(np.round(tt - ts, 3))
+    x_int = LVSND._x    
+
+    # apply func to change state
+    LVSND._x = func(copy.copy(LVSND._x), r, k)
+
+    # evolve to tmax
+    LVSND.update_x(np.round(t_max - tt, 3))
+
+    # read state and store with x_int
+    return np.concatenate([np.array(x_int, ndmin=2),
+                                    LVSND._x.reshape(1,-1)], axis=1)
+
+
+
+def random_x_intervention(
+        init_x,
+        params,
+        t_max,
+        func,
+        num_times=100
+        ):
+
+    r, k, alpha, sigma, gamma = params
+
+    free_cores = 6
+    cpus = max(multiprocessing.cpu_count() - free_cores, 1)
+
+    LVSND = LotkaVolterraSND(r, k, alpha, sigma, init_x, gamma=gamma,
+                             fixed_step=True)
+    
+    ts = 0.
+
+    data = Parallel(n_jobs=cpus, verbose=5)(delayed(random_time_int_loop_func)(init_x, ts, t_max, LVSND, r, k, func) for ii in range(num_times))
+
+    data = np.concatenate(data, axis=0)
+
+    return data

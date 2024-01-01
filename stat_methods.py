@@ -47,22 +47,6 @@ def mi_test_for_significance(A, B, alpha=0.05, sample_size=None, num_samples=100
 
     mi_A = []
     mi_B = []
-#    for ii in range(len(Ax)):
-#        tmp_Ax = Ax.tolist()
-#        del tmp_Ax[ii]
-#        tmp_Ax = np.array(tmp_Ax).reshape(-1,1)
-#        tmp_Ay = Ay.tolist()
-#        del tmp_Ay[ii]
-#        tmp_Ay = np.array(tmp_Ay)
-#        mi_A.append(mutual_info_regression(tmp_Ax, tmp_Ay))
-#    for ii in range(len(Bx)):
-#        tmp_Bx = Bx.tolist()
-#        del tmp_Bx[ii]
-#        tmp_Bx = np.array(tmp_Bx).reshape(-1,1)
-#        tmp_By = By.tolist()
-#        del tmp_By[ii]
-#        tmp_By = np.array(tmp_By)
-#        mi_B.append(mutual_info_regression(tmp_Bx, tmp_By))
 
     for ii in range(num_samples):
         indices = np.random.randint(len(Ax), size=sample_size)
