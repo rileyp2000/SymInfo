@@ -1,6 +1,7 @@
 # file: experiment_1.py
 
-""" Symmetries known exactly from analysis of model.
+""" Symmetries known exactly from analysis of model, or estimated from model
+    runs. Lotka-Volterra systems.
 """
 
 import numpy as np
@@ -9,6 +10,7 @@ from stochastic_systems import *
 from sklearn.feature_selection import mutual_info_regression
 from scipy.stats import ks_2samp
 from stat_methods import *
+from estimate_symmetries import *
 import matplotlib.pyplot as plt
 import sys
 import getopt
@@ -53,10 +55,8 @@ def main():
    
     num_samples = [10, 50, 100, 500, 1000, 5000, 10**4]
     for nn in num_samples:
-        data_A = np.round(random_time_intervention(init_x, params_A, t_max, lvsym,
-                                          num_times=nn), 2)
-        data_B = np.round(random_time_intervention(init_x, params_B, t_max, lvsym,
-                                          num_times=nn), 2)
+        data_A = np.round(LV_A.random_time_intervention(t_max, lvsym, num_times=nn), 2)
+        data_B = np.round(LV_B.random_time_intervention(t_max, lvsym, num_times=nn), 2)
         mi_A.append(mutual_info_regression(data_A[:,0].reshape(-1,1),
                                            data_A[:,1]))
         mi_B.append(mutual_info_regression(data_B[:,0].reshape(-1,1),
@@ -72,10 +72,8 @@ def main():
 
 
     # Demonstrate discrimination from a single trial
-    data_A = np.round(random_time_intervention(init_x, params_A, t_max, lvsym,
-                                      num_times=num_times), 2)
-    data_B = np.round(random_time_intervention(init_x, params_B, t_max, lvsym,
-                                      num_times=num_times), 2)
+    data_A = np.round(LV_A.random_time_intervention(t_max, lvsym, num_times=num_times), 2)
+    data_B = np.round(LV_B.random_time_intervention(t_max, lvsym, num_times=num_times), 2)
     mi_A = mutual_info_regression(data_A[:,0].reshape(-1,1), data_A[:,1])
     mi_B = mutual_info_regression(data_B[:,0].reshape(-1,1), data_B[:,1])
 
@@ -92,6 +90,22 @@ def main():
     print(mi_B)
     print(pval_A)
     print(pval_B)
+
+    LV_A_untrans = LotkaVolterraSND(r, k, alpha, sigma, init_x, gamma=gamma_A)
+    LV_A_trans = LotkaVolterraSND(r, k, alpha, sigma, lvsym(init_x, r, k), gamma=gamma_A)
+    LV_B_untrans = LotkaVolterraSND(r, k, alpha, sigma, init_x, gamma=gamma_B)
+    LV_B_trans = LotkaVolterraSND(r, k, alpha, sigma, lvsym(init_x, r, k), gamma=gamma_B)
+
+    # etimate symmetries for each system
+    SE_A = SymmetryEstimator(LV_A_untrans, LV_A_trans, t_max)
+
+    x = np.linspace(5., 90., 100)
+    y = SE_A._sym_model(x)
+    axes = plt.plot(x, y, 'ro')
+    ys = lvsym(x, r, k)
+    plt.plot(x, ys, 'b-')
+    plt.plot(SE_A._sym_data[:,0], SE_A._sym_data[:,1], 'k+')
+    plt.show()
 
 
 if __name__ == "__main__":
